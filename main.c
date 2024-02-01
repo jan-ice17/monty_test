@@ -1,14 +1,4 @@
 #include "monty.h"
-#include <stdio.h>
-#include <string.h>
-
-/* Declare variables at the beginning */
-FILE *fp;
-stack_t *stack;
-char *line;
-size_t len = 0;
-int read;
-unsigned int line_number = 1;
 
 int main(int argc, char *argv[])
 {
@@ -19,6 +9,13 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    /* Declarations at the beginning */
+    FILE *fp;
+    stack_t *stack = NULL;
+    char *line = NULL;
+    size_t len = 0;
+    int read;  
+
     /* Open the Monty bytecode file */
     fp = fopen(argv[1], "r");
     if (fp == NULL)
@@ -27,12 +24,9 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    /* Initialize the stack */
-    stack = NULL;
-
     /* Process each line of the bytecode file */
-    while ((read = getline(&line, &len, fp)) != -1)
-    {
+    while ((read = fgets(line, len, fp)) != NULL)  
+    
         /* Tokenize the line to extract the opcode and argument */
         char *opcode = strtok(line, " \t\n");
         int n = 0;  /* Initialize argument for opcodes that require it */
@@ -44,8 +38,7 @@ int main(int argc, char *argv[])
                 n = atoi(arg);
             }
         }
-
-        /* Call the appropriate function based on the opcode */
+   
         if (strcmp(opcode, "push") == 0)
         {
             push(&stack, line_number, n);
@@ -62,7 +55,6 @@ int main(int argc, char *argv[])
         {
             swap(&stack, line_number);
         }
-        /* Add more cases for other Monty opcodes here */
         else
         {
             fprintf(stderr, "L%u: unknown instruction %s\n", line_number, opcode);
