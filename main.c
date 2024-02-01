@@ -1,72 +1,84 @@
 #include "monty.h"
 
-int main(int argc, char *argv[])
+/**
+ * main - monty interperter
+ * @ac: the number of arguments
+ * @av: the arguments
+ * Return: void
+ */
+int main(int ac, char *av[])
 {
-    /* Check for correct number of arguments */
-    if (argc != 2)
-    {
-        fprintf(stderr, "USAGE: monty file\n");
-        exit(EXIT_FAILURE);
-    }
+	stack_t *stack = NULL;
+	static char *string[1000] = {NULL};
+	int n = 0;
+	FILE *fd;
+	size_t bufsize = 1000;
 
-    /* Declarations at the beginning */
-    FILE *fp;
-    stack_t *stack = NULL;
-    char *line = NULL;
-    size_t len = 0;
-    int read;  
+	if (ac != 2)
+	{
+		fprintf(stderr, "USAGE: monty file\n");
+		exit(EXIT_FAILURE);
+	}
+	fd = fopen(av[1], "r");
+	if (fd == NULL)
+	{
+		fprintf(stderr, "Error: Can't open file %s\n", av[1]);
+		exit(EXIT_FAILURE);
+	}
 
-    /* Open the Monty bytecode file */
-    fp = fopen(argv[1], "r");
-    if (fp == NULL)
-    {
-        fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
-        exit(EXIT_FAILURE);
-    }
 
-    /* Process each line of the bytecode file */
-    while ((read = fgets(line, len, fp)) != NULL)  
-    
-        /* Tokenize the line to extract the opcode and argument */
-        char *opcode = strtok(line, " \t\n");
-        int n = 0;  /* Initialize argument for opcodes that require it */
-        if (opcode)
-        {
-            char *arg = strtok(NULL, " \t\n");
-            if (arg)
-            {
-                n = atoi(arg);
-            }
-        }
-   
-        if (strcmp(opcode, "push") == 0)
-        {
-            push(&stack, line_number, n);
-        }
-        else if (strcmp(opcode, "pall") == 0)
-        {
-            pall(&stack, line_number);
-        }
-        else if (strcmp(opcode, "pop") == 0)
-        {
-            pop(&stack, line_number);
-        }
-        else if (strcmp(opcode, "swap") == 0)
-        {
-            swap(&stack, line_number);
-        }
-        else
-        {
-            fprintf(stderr, "L%u: unknown instruction %s\n", line_number, opcode);
-            exit(EXIT_FAILURE);
-        }
+	for (n = 0; getline(&(string[n]), &bufsize, fd) > 0; n++)
+		;
+	execute(string, stack);
+	free_list(string);
+	fclose(fd);
+	return (0);
+}
 
-        line_number++;
-    }
+/**
+ * execute - executes opcodes
+ * @string: contents of file
+ * @stack: the list
+ * Return: void
+ */
 
-    /* Free allocated memory */
-    free(line);
-    fclose(fp);
+void execute(char *string[], stack_t *stack)
+{
+	int ln, n, i;
 
-    return 0;
+	instruction_t st[] = {
+		{"pall", pall},
+		{"swap", swap},
+		{"pop", pop},
+		{"null", NULL}
+	};
+
+	for (ln = 1, n = 0; string[n + 1]; n++, ln++)
+	{
+		if (_strcmp("push", string[n]))
+			push(&stack, ln, pushint(string[n], ln));
+		else if (_strcmp("nop", string[n]))
+			;
+		else
+		{
+			i = 0;
+			while (!_strcmp(st[i].opcode, "null"))
+			{
+				if (_strcmp(st[i].opcode, string[n]))
+				{
+					st[i].f(&stack, ln);
+					break;
+				}
+				i++;
+			}
+			if (_strcmp(st[i].opcode, "null") && !_strcmp(string[n], "\n"))
+			{
+				fprintf(stderr, "L%u: unknown instruction %s", ln, string[n]);
+				if (!nlfind(string[n]))
+					fprintf(stderr, "\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+	free_stack(stack);
 }
