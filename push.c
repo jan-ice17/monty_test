@@ -1,40 +1,47 @@
 #include "monty.h"
 
 /**
-* push - Pushes an element to the stack
-* @stack: pointer to head of stack
-* @line_number: file's line number
-*
-* Return: address of new element
+* push - adds an elements to top of stack
+* @stack: stack top
+* @line_number: script line under execution
 */
 void push(stack_t **stack, unsigned int line_number)
 {
-        if (!*stack)
-        {
-                *stack = malloc(sizeof(stack_t));
-                if (!*stack)
-                {
-                        fprintf(stderr, "Error: malloc failed\n");
-                        exit(EXIT_FAILURE);
-                }
-                (*stack)->n = atoi(global.arg);
-                (*stack)->prev = NULL;
-                (*stack)->next = NULL;
-                return;
-        }
+	char *n = strtok(NULL, DELIM);
 
-        stack_t *new = malloc(sizeof(stack_t));
-        if (!new)
-        {
-                fprintf(stderr, "Error: malloc failed\n");
-                exit(EXIT_FAILURE);
-        }
-        new->n = atoi(global.arg);
-        new->next = *stack;
-        (*stack)->prev = new;
-        new->prev = NULL;
-        *stack = new;
+	if (!n || !is_integer(n))
+	{
+		fprintf(stderr, "L%d: usage: %s integer\n", line_number, bundle.opcode);
+		bundle.status = EXIT_FAILURE;
+		shutdown();
+	}
+
+	push_helper(stack, atoi(n));
 }
 
+/**
+* push_helper - helps add an element to top of stack
+* @head: stack top
+* @n: number to be pushed
+*/
+void push_helper(stack_t **head, int n)
+{
+	short not_push = strcmp(bundle.line_text, "push");
+	stack_t *item = node_alloc();
 
-
+	item->n = n;
+	item->next = not_push || bundle.mode == _stack ? *head : NULL;
+	item->prev = not_push || bundle.mode == _stack ? NULL : *head;
+	if (*head)
+	{
+		if (not_push || bundle.mode == _stack)
+			(*head)->prev = item;
+		else
+			(*head)->next = item;
+		*head = item;
+	}
+	else
+	{
+		bundle.stack = bundle.queue = item;
+	}
+}
