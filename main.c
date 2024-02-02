@@ -1,69 +1,123 @@
 #include "monty.h"
+#include "globe.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define MAX_LINE_LENGTH 1024
-
-instruction_t instructions[] = {
-        {"push", push},
-        {"pall", pall},
-        {NULL, NULL}
-};
 
 /**
- * main - monty interperter
- * @ac: the number of arguments
- * @av: the arguments
- * Return: void
+ * file_open - checks if a file is provided on command line and opens the file
+ * @ac: size of argument list
+ * @av: list of arguments from the command line
+ *
  */
-int main(int argc, char *argv[])
+void file_open(int ac, char **av)
 {
-        if (argc != 2)
-        {
-                fprintf(stderr, "USAGE: monty <file>\n");
-                exit(EXIT_FAILURE);
-        }
-
-        FILE *fp = fopen(argv[1], "r");
-        if (!fp)
-        {
-                fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
-                exit(EXIT_FAILURE);
-        }
-
-        stack_t *stack = NULL;
-        unsigned int line_number = 0;
-        char line[MAX_LINE_LENGTH];
-
-        while (fgets(line, MAX_LINE_LENGTH, fp))
-        {
-                line_number++;
-                char *token = strtok(line, " \t\n");
-                if (!token)
-                        continue;
-
-                instruction_t *instruction = instructions;
-                while (instruction->opcode)
-                {
-                        if (strcmp(instruction->opcode, token) == 0)
-                        {
-                                char *arg = strtok(NULL, " \t\n");
-                                instruction->f(&stack, line_number, arg);
-                                break;
-                        }
-                        instruction++;
-                }
-
-                if (!instruction->opcode)
-                {
-                        fprintf(stderr, "L%u: unknown instruction %s\n", line_number, token);
-                        exit(EXIT_FAILURE);
-                }
-        }
-
-        fclose(fp);
-        free_stack(stack);
-        return 0;
+	if (ac != 2)
+	{
+		fprintf(stderr, "USAGE: monty file\n");
+		free(global);
+		exit(EXIT_FAILURE);
+	}
+	global->file = fopen(av[1], "r");
+	if (global->file == NULL)
+	{
+		fprintf(stderr, "Error: Can't open file %s\n", av[1]);
+		free(global);
+		exit(EXIT_FAILURE);
+	}
 }
+
+/**
+ * free_memory - frees all allocated memory and closes the input file stream
+ *
+ */
+void free_memory(void)
+{
+	free(global->token_list);
+	free(global->line);
+	free_stack();
+	fclose(global->file);
+	free(global);
+}
+
+/**
+ * create_global - allocate space for the globe structure
+ *
+ */
+void create_global(void)
+{
+	globe_t *holder = malloc(sizeof(*holder));
+
+	if (holder == NULL)
+	{
+		fprintf(stderr, "Error: malloc failed\n");
+		exit(EXIT_FAILURE);
+	}
+	global = holder;
+	global->head = NULL;
+}
+
+/**
+ * main - This is where the monty program starts
+ * @ac: number of arguments to the main function
+ * @av: argument list
+ *
+ * Return: EXIT_SUCCESS on completion, otherwise returns EXIT_FAILURE
+ */
+int main(int ac, char **av)
+{
+	char *line = NULL;
+	char *tok;
+	int error = 0;
+	int i = 0;
+	int lno = 0;
+	size_t line_size = 1024;
+
+	create_global();
+	file_open(ac, av);
+	allocate_memory();
+	line = global->line;
+	while ((line = fgets(line, line_size, global->file)))
+	{
+		tok = strtok(line, " \n");
+		while (tok)
+		{
+			global->token_list[i++] = tok;
+			tok = strtok(NULL, " \n");
+		}
+		global->token_list[i] = NULL;
+		i = 0;
+		global->line_no = ++lno;
+		error = interprete(global->token_list, global->line_no);
+		if (error)
+			break;
+		memset(line, 0, line_size);
+	}
+	free_memory();
+	if (error)
+		return (EXIT_FAILURE);
+	return (EXIT_SUCCESS);
+}
+
+/**
+ * allocate_memory - allocates buffer to for each line and list of tokens
+ *
+ */
+void allocate_memory(void)
+{
+	char *line;
+	char **token_list;
+	const int line_size = 1024;
+
+	line = malloc(sizeof(*line) * line_size);
+	if (line == NULL)
+	{
+		fprintf(stderr, "Error: malloc failed\n");
+		exit(EXIT_FAILURE);
+	}
+	token_list = malloc(sizeof(*token_list) * 55);
+	if (token_list == NULL)
+	{
+		fprintf(stderr, "Error: malloc failed\n");
+		exit(EXIT_FAILURE);
+	}
+	global->line = line;
+	global->token_list = token_list;

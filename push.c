@@ -1,47 +1,32 @@
 #include "monty.h"
 
-/**
-* push - adds an elements to top of stack
-* @stack: stack top
-* @line_number: script line under execution
-*/
-void push(stack_t **stack, unsigned int line_number)
-{
-	char *n = strtok(NULL, DELIM);
-
-	if (!n || !is_integer(n))
-	{
-		fprintf(stderr, "L%d: usage: %s integer\n", line_number, bundle.opcode);
-		bundle.status = EXIT_FAILURE;
-		shutdown();
-	}
-
-	push_helper(stack, atoi(n));
-}
 
 /**
-* push_helper - helps add an element to top of stack
-* @head: stack top
-* @n: number to be pushed
-*/
-void push_helper(stack_t **head, int n)
+ * push - Pushes an element to the stack.
+ * @n: integer to be pushed
+ *
+ */
+void push(const int n)
 {
-	short not_push = strcmp(bundle.line_text, "push");
-	stack_t *item = node_alloc();
+	stack_t *top = NULL;
 
-	item->n = n;
-	item->next = not_push || bundle.mode == _stack ? *head : NULL;
-	item->prev = not_push || bundle.mode == _stack ? NULL : *head;
-	if (*head)
+	top = malloc(sizeof(*top));
+	if (top == NULL)
 	{
-		if (not_push || bundle.mode == _stack)
-			(*head)->prev = item;
-		else
-			(*head)->next = item;
-		*head = item;
+		fprintf(stderr, "Error: malloc failed\n");
+		exit(EXIT_FAILURE);
 	}
-	else
+	if (global->head == NULL)
 	{
-		bundle.stack = bundle.queue = item;
+		top->n = n;
+		top->prev = NULL;
+		top->next = NULL;
+		global->head = top;
+		return;
 	}
+	(global->head)->prev = top;
+	top->next = global->head;
+	top->prev = NULL;
+	top->n = n;
+	global->head = top;
 }
