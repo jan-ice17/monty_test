@@ -1,5 +1,9 @@
 #include "monty.h"
 
+/* Function prototypes */
+void push(stack_t **stack, unsigned int line_number);
+void pall(stack_t **stack, unsigned int line_number);
+
 int main(int argc, char *argv[])
 {
     if (argc != 2) {
@@ -7,13 +11,13 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    FILE *fp = fopen(argv[1], "r");
+    FILE *fp = fopen(argv[1], "r"); 
     if (fp == NULL) {
         fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
         exit(EXIT_FAILURE);
     }
 
-    stack_t *stack = NULL;
+    stack_t *stack = NULL;  
     unsigned int line_number = 1;
     char *line = NULL;
     size_t len = 0;
