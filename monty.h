@@ -3,6 +3,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <string.h>
+#include <sys/types.h>
 
 /* Struct for doubly linked list rep of stackorqueue */
 typedef struct stack_s {

@@ -1,53 +1,56 @@
 #include "monty.h"
+#include <string.h>
+#include <stdio.h>
 
-/* Function prototypes */
-void push(stack_t **stack, unsigned int line_number);
-void pall(stack_t **stack, unsigned int line_number);
+#define MAX_LINE_LENGTH 1024
 
+/**
+ * main - Entry point
+ * @argc: Argument count
+ * @argv: Argument vector
+ *
+ * Return: 0 on success, EXIT_FAILURE on error
+ */
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
-        fprintf(stderr, "USAGE: monty file\n");
-        exit(EXIT_FAILURE);
-    }
+	FILE *fp;
+	stack_t *stack;
+	char line[MAX_LINE_LENGTH];
+	unsigned int line_number = 0;
+	instruction_t instructions[] = {{"push", push}, {"pall", pall}, {NULL, NULL}};
 
-    FILE *fp = fopen(argv[1], "r"); 
-    if (fp == NULL) {
-        fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
-        exit(EXIT_FAILURE);
-    }
+	if (argc != 2)
+	{
+		fprintf(stderr, "USAGE: monty file\n");
+		exit(EXIT_FAILURE);
+	}
 
-    stack_t *stack = NULL;  
-    unsigned int line_number = 1;
-    char *line = NULL;
-    size_t len = 0;
+	fp = fopen(argv[1], "r");
+	if (fp == NULL)
+	{
+		fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
+		exit(EXIT_FAILURE);
+	}
 
-    while (getline(&line, &len, fp) != -1) {
-        char *token = strtok(line, " \t\n");
-        instruction_t instructions[] = {
-            {"push", push},
-            {"pall", pall},
-            {NULL, NULL}
-        };
+	stack = NULL;
 
-        int i = 0;
-        while (instructions[i].opcode != NULL) {
-            if (strcmp(token, instructions[i].opcode) == 0) {
-                instructions[i].f(&stack, line_number);
-                break;
-            }
-            i++;
-        }
+	while (fgets(line, MAX_LINE_LENGTH, fp) != NULL)
+	{
+		char *token = strtok(line, " \t\n");
+		int i = 0;
 
-        if (instructions[i].opcode == NULL) {
-            fprintf(stderr, "L%u: unknown instruction %s\n", line_number, token);
-            exit(EXIT_FAILURE);
-        }
+		while (instructions[i].opcode != NULL)
+		{
+			if (strcmp(token, instructions[i].opcode) == 0)
+			{
+				instructions[i].f(&stack, line_number);
+				break;
+			}
+			i++;
+		}
+		line_number++;
+	}
 
-        line_number++;
-    }
-
-    free(line);
-    fclose(fp);
-    return 0;
+	fclose(fp);
+	return (0);
 }
