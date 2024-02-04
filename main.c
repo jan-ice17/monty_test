@@ -13,44 +13,42 @@
  */
 int main(int argc, char *argv[])
 {
-	FILE *fp;
-	stack_t *stack;
-	char line[MAX_LINE_LENGTH];
-	unsigned int line_number = 0;
-	instruction_t instructions[] = {{"push", push}, {"pall", pall}, {NULL, NULL}};
+    FILE *fp;
+    stack_t *stack = NULL;
+    char line[MAX_LINE_LENGTH];
+    unsigned int line_number = 0;
+    instruction_t instructions[] = {
+        {"push", push},
+        {"pall", pall},
+        {NULL, NULL}
+    };
 
-	if (argc != 2)
-	{
-		fprintf(stderr, "USAGE: monty file\n");
-		exit(EXIT_FAILURE);
-	}
+    if (argc != 2) {
+        fprintf(stderr, "USAGE: monty file\n");
+        exit(EXIT_FAILURE);
+    }
 
-	fp = fopen(argv[1], "r");
-	if (fp == NULL)
-	{
-		fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
-		exit(EXIT_FAILURE);
-	}
+    fp = fopen(argv[1], "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
+        exit(EXIT_FAILURE);
+    }
 
-	stack = NULL;
+    while (fgets(line, MAX_LINE_LENGTH, fp) != NULL) {
+        char *token = strtok(line, " \t\n");
+        int i = 0;
 
-	while (fgets(line, MAX_LINE_LENGTH, fp) != NULL)
-	{
-		char *token = strtok(line, " \t\n");
-		int i = 0;
+        while (instructions[i].opcode != NULL) {
+            if (strcmp(token, instructions[i].opcode) == 0) {
+                instructions[i].f(&stack, line_number);
+                break;
+            }
+            i++;
+        }
+        line_number++;
+    }
 
-		while (instructions[i].opcode != NULL)
-		{
-			if (strcmp(token, instructions[i].opcode) == 0)
-			{
-				instructions[i].f(&stack, line_number);
-				break;
-			}
-			i++;
-		}
-		line_number++;
-	}
-
-	fclose(fp);
-	return (0);
+    fclose(fp);
+    return (0);
 }
+
